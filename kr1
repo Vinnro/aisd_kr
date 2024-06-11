@@ -1,1 +1,244 @@
+#include "matrix/kr1_structs(matrix).h"
+#include "stacks/kr1_structs(stack node).h"
+#include "queues/kr1_structs(queues node).h"
+#include "stacks/kr1_structs(stack vector).h"
+#include "queues/kr1_structs(queues vector).h"
+#include <stdlib.h>
 
+///---------------------------------------------------------------------------------------------------------------------
+
+// Функция для создания прямоугольной матрицы
+Matrix* func1(Matrix *inputMatrix) {
+    // Найти максимальный размер строки
+    int maxSize = 0;
+    for (int i = 0; i < inputMatrix->size; ++i) {
+        if (inputMatrix->lines[i].size > maxSize) {
+            maxSize = inputMatrix->lines[i].size;
+        }
+    }
+
+    // Создание новой матрицы
+    Matrix *newMatrix = (Matrix*)malloc(sizeof(Matrix));
+    newMatrix->size = inputMatrix->size;
+    newMatrix->lines = (Line*)malloc(newMatrix->size * sizeof(Line));
+
+    // Инициализация строк новой матрицы
+    for (int i = 0; i < newMatrix->size; ++i) {
+        newMatrix->lines[i].size = maxSize;
+        newMatrix->lines[i].data = (double*)calloc(maxSize, sizeof(double)); // Заполнение нулями
+
+        // Копирование данных из исходной матрицы
+        for (int j = 0; j < inputMatrix->lines[i].size; ++j) {
+            newMatrix->lines[i].data[j] = inputMatrix->lines[i].data[j];
+        }
+    }
+
+    return newMatrix;
+}
+
+// Функция для обмена строк
+Matrix* func2(Matrix *inputMatrix) {
+    // Найти строку с максимальным элементом
+    int maxRowIndex = 0;
+    double maxElement = inputMatrix->lines[0].data[0];
+
+    for (int i = 0; i < inputMatrix->size; ++i) {
+        for (int j = 0; j < inputMatrix->lines[i].size; ++j) {
+            if (inputMatrix->lines[i].data[j] > maxElement) {
+                maxElement = inputMatrix->lines[i].data[j];
+                maxRowIndex = i;
+            }
+        }
+    }
+
+    // Если первая строка уже содержит максимальный элемент, то ничего менять не нужно
+    if (maxRowIndex == 0) {
+        return inputMatrix;
+    }
+
+    // Обменять первую строку и строку с максимальным элементом
+    Line temp = inputMatrix->lines[0];
+    inputMatrix->lines[0] = inputMatrix->lines[maxRowIndex];
+    inputMatrix->lines[maxRowIndex] = temp;
+
+    return inputMatrix;
+}
+
+Matrix* func3(Matrix *inputMatrix) {
+    // Проходим по каждой строке матрицы
+    for (int i = 0; i < inputMatrix->size; ++i) {
+        int minIndex = 0;
+        int maxIndex = 0;
+        double minElement = inputMatrix->lines[i].data[0];
+        double maxElement = inputMatrix->lines[i].data[0];
+
+        // Находим индексы минимального и максимального элемента в строке
+        for (int j = 1; j < inputMatrix->lines[i].size; ++j) {
+            if (inputMatrix->lines[i].data[j] < minElement) {
+                minElement = inputMatrix->lines[i].data[j];
+                minIndex = j;
+            }
+            if (inputMatrix->lines[i].data[j] > maxElement) {
+                maxElement = inputMatrix->lines[i].data[j];
+                maxIndex = j;
+            }
+        }
+
+        // Меняем местами минимальный и максимальный элемент
+        double temp = inputMatrix->lines[i].data[minIndex];
+        inputMatrix->lines[i].data[minIndex] = inputMatrix->lines[i].data[maxIndex];
+        inputMatrix->lines[i].data[maxIndex] = temp;
+    }
+
+    return inputMatrix;
+}
+
+///---------------------------------------------------------------------------------------------------------------------
+
+// Функция для извлечения элемента из очереди
+void pop(QueueVector *queue, int *result) {
+    // Проверка, что очередь не пуста
+    if (queue->count == 0) {
+        return;
+    }
+
+    // Извлечение элемента из головы очереди
+    *result = queue->data[queue->head];
+
+    // Обновление позиции головы
+    queue->head = (queue->head + 1) % queue->size;
+
+    // Уменьшение количества элементов в очереди
+    queue->count--;
+}
+
+void push(QueueVector *queue, int value) {
+    // Проверка, что очередь не переполнена
+    if (queue->count == queue->size) {
+        return;
+    }
+    // Добавление элемента в хвост очереди
+    queue->data[queue->tail] = value;
+    // Обновление позиции хвоста
+    queue->tail = (queue->tail + 1) % queue->size;
+    // Увеличение количества элементов в очереди
+    queue->count++;
+}
+
+//Очередь на основе списка
+
+void push1(QueueList *queue, int value) {
+    // Создание нового узла
+    QNode* newNode = (QNode*)malloc(sizeof(QNode));
+    newNode->value = value;
+    newNode->next = NULL;
+
+    // Если очередь пуста, новый узел становится головой и хвостом
+    if (queue->tail == NULL) {
+        queue->head = newNode;
+        queue->tail = newNode;
+    } else {
+        // Добавление нового узла в конец очереди
+        queue->tail->next = newNode;
+        queue->tail = newNode;
+    }
+}
+
+// Функция для извлечения элемента из очереди
+int pop1(QueueList *queue, int *result) {
+    // Проверка, что очередь не пуста
+    if (queue->head == NULL) {
+        return 1;
+    }
+
+    // Извлечение элемента из головы очереди
+    QNode* temp = queue->head;
+    *result = temp->value;
+
+    // Обновление головы очереди
+    queue->head = queue->head->next;
+
+    // Если очередь стала пустой, обновляем хвост
+    if (queue->head == NULL) {
+        queue->tail = NULL;
+    }
+    // Освобождение памяти
+    free(temp);
+    return 0;
+}
+
+///---------------------------------------------------------------------------------------------------------------------
+
+// Функция для добавления элемента в стек
+void push2(StackVector *stack, int value) {
+    // Проверка, что стек не переполнен
+    if (stack->top == stack->size - 1) {
+        return;
+    }
+
+    // Добавление элемента в стек
+    stack->data[++stack->top] = value;
+}
+
+// Функция для извлечения элемента из стека
+int pop2(StackVector *stack, int *result) {
+    // Проверка, что стек не пуст
+    if (stack->top == -1) {
+        return 1;
+    }
+
+    // Извлечение элемента из стека
+    *result = stack->data[stack->top--];
+    return 0;
+}
+
+//Стек на основе списка
+
+// Функция для добавления элемента в стек
+void push3(StackList *stack, int value) {
+    // Создание нового узла
+    Node* newNode = (Node*)malloc(sizeof(Node));
+    newNode->value = value;
+    newNode->next = stack->head;
+
+    // Установка нового узла в качестве головы стека
+    stack->head = newNode;
+}
+
+// Функция для извлечения элемента из стека
+int pop3(StackList *stack, int *result) {
+    // Проверка, что стек не пуст
+    if (stack->head == NULL) {
+        return 1;
+    }
+
+    // Извлечение элемента из головы стека
+    Node* temp = stack->head;
+    *result = temp->value;
+
+    // Обновление головы стека
+    stack->head = stack->head->next;
+
+    // Освобождение памяти
+    free(temp);
+    return 0;
+}
+
+void freeStack(StackList *stack) {
+    Node* current = stack->head;
+    Node* next;
+    while (current != NULL) {
+        next = current->next;
+        free(current);
+        current = next;
+    }
+}
+void freeQueue(QueueList *queue) {
+    QNode *current = queue->head;
+    QNode *next;
+    while (current != NULL) {
+        next = current->next;
+        free(current);
+        current = next;
+    }
+}
